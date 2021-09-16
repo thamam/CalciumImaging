@@ -1,0 +1,10 @@
+'Dataset\CAI_1\GCaMP5k\\processed_data\';
+    % load('data_071411_cell1_005.mat');
+    % load('data.mat');
+    % load('data_080311_cell2_001.mat'); % clean but very small number of spikes
+    % load('data_080511_cell7_002.mat');
+    % load('data_080511_cell12_002.mat');
+    % load('data_082611_cell1_002.mat'); % clear diagram - second choice
+    % load('data_082611_cell2_001.mat');% clear diagram - first choice
+    % load('data_090111_cell1002.mat'); % clean with some outliers or falsealarms
+    % load('data_090711_cell4003.mat');

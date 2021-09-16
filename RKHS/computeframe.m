@@ -1,4 +1,4 @@
-function [frmlen, tminInd, mintime, m] = computeframe(supeps, delta, k )
+function [tminInd, mintime] = computeframe(supeps, delta, k )
 %computeframe
 % Find the minimal distance where k(|tmin|)<supeps
 % % cind = mintime in delta units ( time indexes units)
@@ -11,9 +11,7 @@ for i=1:10
     keval = k(0,timebrackets);        % evaluate k(0,t) for all t on the grid
     tminInd = find(keval<supeps,1,'first'); % find first i where  k(0,t_i)<supeps
     if ~isempty(tminInd) % if found such t_i terminate and return tmin
-        mintime = tminInd*delta;
-        frmlen = 2*mintime;
-        m = 2* tminInd;
+        mintime = tminInd*delta;       
         return;
     else %if not, extend search range
         N=N*2;
