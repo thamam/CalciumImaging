@@ -1,5 +1,5 @@
-function [dataout] = loaddata(dataname)
-%UNTITLED6 Summary of this function goes here
+function [dataout] = loaddata(dataname, datapath)
+%loaddata Load spikes data 
 %   Detailed explanation goes here
 
 
@@ -14,7 +14,12 @@ switch dataname
         dataout.ts=ts;
         dataout.tf=tf;
         dataout.deltatiks = deltatiks;
+    case 'user'
+        
+        
 end
+
+
 end
 
 
