@@ -9,11 +9,11 @@ switch dataname
         [ts, tf] = deal(0, 15);
         timevec = ts+Ts:Ts:tf;
         spikevec = randi([0,1],numel(timevec),1);
-        dataout.spikevec = spikevec;
+        dataout.spikevec = spikevec(:);
         dataout.Ts=Ts;
         dataout.ts=ts;
         dataout.tf=tf;
-        dataout.deltatiks = timevec;        
+        dataout.timevec = timevec(:);        
     otherwise
         obj_ = load(strcat(datapath,dataname),'obj');
         obj=obj_.obj;
@@ -25,11 +25,12 @@ switch dataname
 %         filt=obj.timeSeriesArrayHash.value{4}.valueMatrix;
         t_ephys=obj.timeSeriesArrayHash.value{4}.time;       
         
-        dataout.spikevec=obj.timeSeriesArrayHash.value{5}.valueMatrix;                      
+        spikevec=obj.timeSeriesArrayHash.value{5}.valueMatrix;                      
+        dataout.spikevec = spikevec(:);
         dataout.Ts = t_ephys(2)- t_ephys(1);
         dataout.ts = t_ephys(1) ;
         dataout.tf = t_ephys(end);
-        dataout.timevec = t_ephys;    
+        dataout.timevec = t_ephys(:);    
 end
 
 

@@ -7,6 +7,7 @@ function [xhat,outstat, XHAT] = runstreamestimate(dataout, m, options, Tf, k, et
 %% Parse data and set all variables
 XHAT={};
 timevec = dataout.timevec;
+tspikes = dataout.tspikes;
 
 X0 = ones(m,1); % initial guess
 xhat = [];
@@ -16,53 +17,54 @@ funarr = {};
 % grdarr = {};
 hesarr = {};
 
-Kt_tvec =[] ;% k_t( ) time points 
-Ktm1_tvec = [];
-Kt_indvec = [] ;% k_t( ) indices 
+kttvec =[] ;% k_t( ) time points 
+ktm1tvec = [];
+ktind = [] ;% k_t( ) indices 
 % Ktm1_indvec = [] ;
 
-Tdatind_t = [];% t-th Data frame indices 
+dtind = [];% t-th Data frame indices 
 % Tdatind_tm1 = []; 
-Tdat_t = [];% t-th Data frame time points
+dttvec = [];% t-th Data frame time points
 % Tdat_tm1 = []; 
 outstat=[];
+
 for t=1:1:Tf
     % We curently maintain latency of at least frmlen/2 samples
      
     % Update frames 
     if t==1 %first block is half size and depends only on x1 f_1(x_1)
         % update data frames indices 
-        Tdatind_t = (1:m/2);    
-        Tdat_t = timevec(Tdatind_t);
+        dtind = (1:m/2);    
+        dttvec = timevec(dtind);
         % Update basis functions (kernel) indices 
-        Kt_indvec = 1:m;
-        Kt_tvec = timevec(Kt_indvec);
+        ktind = 1:m;
+        kttvec = timevec(ktind);
     else
         % update data frames indices
-        Tdatind_tm1 = Tdatind_t;
-        Tdatind_t = Tdatind_tm1(end) + (1:m);
+        Tdatind_tm1 = dtind;
+        dtind = Tdatind_tm1(end) + (1:m);
 %         Tdat_tm1 = Tdat_t;
-        Tdat_t = timevec(Tdatind_t);
+        dttvec = timevec(dtind);
         
         % Update basis functions (kernel) indices
-        Ktm1_tvec = Kt_tvec;
-        Ktm1_indvec = Kt_indvec;
-        Kt_indvec = Ktm1_indvec(end) + (1:m);
-        Kt_tvec =  timevec(Kt_indvec);
+        ktm1tvec = kttvec;
+        Ktm1_indvec = ktind;
+        ktind = Ktm1_indvec(end) + (1:m);
+        kttvec =  timevec(ktind);
     end
             
-    % Update bins spikes cound bt(i) = #spikes in [Tdat_t(i-1) , Tdat_t(i)]
-    bt = dataout.spikevec(Tdatind_t);
-    bt = bt(:);
     
+    % Update bins spikes cound bt(i) = #spikes in [Tdat_t(i-1) , Tdat_t(i)]
+    tframe = [dttvec(1),dttvec(end)];    
+    tau_t = dttvec(dataout.spikevec(dtind)==1); %  same as: tspikes(tspikes>=tframe(1) & tspikes<=tframe(2));      
     % Update basis functions frame handles and compute ft handle
     if t==1
-        kt = @(tj) k(Kt_tvec(:).', tj);
-        [fteval,ft_grad, ft_hes] = computelossfunc(dataout.delta, Tdat_t, bt, [], kt, m, t);        
+        kt = @(tj) k(kttvec(:), tj);
+        [fteval,ft_grad, ft_hes] = computelossatevetns(dataout.delta, dttvec, tau_t, [], kt, m, t);        
     else        
-        ktm1 = @(tj) k(Ktm1_tvec(:).', tj);
-        kt   = @(tj) k(Kt_tvec(:).', tj);                
-        [fteval,ft_grad, ft_hes] = computelossfunc(dataout.delta, Tdat_t, bt, ktm1,kt,m,t);
+        ktm1 = @(tj) k(ktm1tvec(:), tj);
+        kt   = @(tj) k(kttvec(:), tj);                        
+        [fteval,ft_grad, ft_hes] = computelossatevetns(dataout.delta, dttvec, tau_t, ktm1, kt, m, t);
     end    
     
     % Add ft and derivatives to storage array

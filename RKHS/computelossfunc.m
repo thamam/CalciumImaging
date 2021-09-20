@@ -9,25 +9,25 @@ if t==1 %shoter block f1(x) vs ft(xtm1,xt)
 
     Kt = kt(Tdat_t(:)); % mx2m matrix
     
-    fteval = @(xt) onevec.'*exp(delta* Kt*xt) ...
+    fteval = @(xt) delta*onevec.'*exp( Kt*xt) ...
         - bt.'*(Kt*xt);
         
-    ft_grad = @(xt) Kt.' *(delta * exp(delta* Kt*xt)    - bt);
+    ft_grad = @(xt) delta * Kt.' * exp( Kt*xt)    - bt);
     
     
-    ft_hes = @(xt) delta^2 *(Kt.'*exp(delta* Kt*xt)*exp(delta* Kt*xt).'*Kt);
+    ft_hes = @(xt) delta *(Kt.'*exp(Kt*xt)*exp( Kt*xt).'*Kt);
     
 else    % t=2,3,...
     onevec = ones(m,1);
     
     Kt = [ktm1(Tdat_t(:)) , kt(Tdat_t(:)) ]; % mx2m matrix    
     
-    fteval = @(xtm1, xt) onevec.'*exp(delta* Kt*[xtm1;xt]) ...
+    fteval = @(xtm1, xt) delta*onevec.'*exp( Kt*[xtm1;xt]) ...
         - bt.'*(Kt*[xtm1;xt]);  
     
-    ft_grad = @(xtm1,xt) Kt.' *(delta * exp(delta* Kt*[xtm1;xt])    - bt);
+    ft_grad = @(xtm1,xt) delta*Kt.' *( exp( Kt*[xtm1;xt])    - bt);
         
-    ft_hes = @(xtm1, xt) delta^2 *(Kt.'*diag(exp(delta* Kt*[xtm1;xt]))*Kt);    
+    ft_hes = @(xtm1, xt) delta*(Kt.'*diag(exp( Kt*[xtm1;xt]))*Kt);    
 end
 
 

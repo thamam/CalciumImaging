@@ -1,4 +1,4 @@
-function [delta, tdeltavec, dsspikesvec] = discretizesamples(tvec, spikesvec, deltaTarget)
+function [delta, tkernvec, dsspikesvec, tspikes] = discretizesamples(tvec, spikesvec, deltaTarget)
 %DISCRETIZESAMPLES Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -18,7 +18,12 @@ if zrpadnum>0
 end
 
 %downsample
-tdeltavec = delta:delta:tvec(end);
-dsspikesvec = sum(reshape(spikesvec,ds,[]),1); 
+tkernvec = delta:delta:tvec(end);
+tkernvec=tkernvec(:);
+dsspikesvec = sum(reshape(spikesvec,ds,[]),1) ; 
+dsspikesvec = dsspikesvec(:) ;
+
+% spikes exact time
+tspikes = tvec(logical(spikesvec));
 
 end
