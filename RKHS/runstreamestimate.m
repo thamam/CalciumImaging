@@ -1,4 +1,4 @@
-function [xhat,outstat, XHAT] = runstreamestimate(dataout, m, options, Tf, k, eta, gamma)
+function [xhat,outstat,ktvec, dtvec, XHAT, tauArray] = runstreamestimate(dataout, m, options, Tf, k, eta, gamma)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -27,7 +27,7 @@ dtind = [];% t-th Data frame indices
 dttvec = [];% t-th Data frame time points
 % Tdat_tm1 = []; 
 outstat=[];
-
+tauArray = {};
 for t=1:1:Tf
     % We curently maintain latency of at least frmlen/2 samples
      
@@ -56,7 +56,9 @@ for t=1:1:Tf
     
     % Update bins spikes cound bt(i) = #spikes in [Tdat_t(i-1) , Tdat_t(i)]
     tframe = [dttvec(1),dttvec(end)];    
-    tau_t = dttvec(dataout.spikevec(dtind)==1); %  same as: tspikes(tspikes>=tframe(1) & tspikes<=tframe(2));      
+    tau_t = tspikes(tspikes>=tframe(1) & tspikes<=tframe(2));
+    tauArray{t} = tau_t;
+    
     % Update basis functions frame handles and compute ft handle
     if t==1
         kt = @(tj) k(kttvec(:), tj);
@@ -95,11 +97,12 @@ for t=1:1:Tf
     % update guess
     Xc = [xhat ; X0];    
     sprintf('Runnig solver, t = % i\n',t)
-    [xhat,fval,exitflag,output, grad, hessian ]  = fminunc(fun, Xc, options); %, [],[],[],[],Xc*0,[]);
+    [xhat, fval, exitflag, output, grad, hessian ]  = fminunc(fun, Xc, options); %, [],[],[],[],Xc*0,[]);
     XHAT{t} = xhat;
-    outstat(t,:) = norm(grad)/sqrt(t*m); %plot scaled error magnitude
-        
+    outstat(t,:) = norm(grad)/sqrt(t*m); %plot scaled error magnitude           
 end
+    ktvec = timevec(1:ktind(end));
+    dtvec = timevec(1:dtind(end));     
 
 end
 

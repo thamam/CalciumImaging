@@ -11,7 +11,22 @@
 close all;
 clear;
 clc;
+
+saveresults = true;
+makevideo = true;
 %% setting simulation and algorithm parameters
+% Select data
+% change data name into on
+
+% dataname = 'test';
+% datapath=[];
+
+% addpath(genpath('C:\Users\tomer\MATLAB\Projects\CI\Datasets'));
+
+dataname = 'data_080511_cell7_002.mat';
+datapath = '..\Datasets\GCaMP5k\\processed_data\';
+
+%%
 % Algorithm parameters
 supeps = 1e-3; % support suppers threshold
 sig_f = 1; sig_l= 1/2; %kernel initial parameters
@@ -32,21 +47,9 @@ options.HessianFcn = 'objective';
 % options.MaxIterations = 500;
 % options.FunctionTolerance = 1e-10;
 
-
 %% Load data
-
-% change data name into on
-dataname = 'test';
-datapath=[];
-% addpath(genpath('C:\Users\tomer\MATLAB\Projects\CI\Datasets'));
-
-% dataname = 'data_080511_cell7_002.mat';
-% datapath = '..\Datasets\GCaMP5k\\processed_data\';
-
 [rawdataout] = loaddata(dataname, datapath) ; %read data for code testing
-
 deltaTarget = 40e-3;
-
 [delta, tkernvec, dsspikesvec, tspikes] = discretizesamples(rawdataout.timevec, rawdataout.spikevec, deltaTarget);
 
 %prepare discretized data struct
@@ -79,26 +82,35 @@ m = fmag*2*tminInd;
 
 
 % Set simulation length as N*frmlen N integer - truncate if needed
-Tf = floor(dataout.tf/frmlen); % simulation length in frames
-%% Run  streaming solver
-[xhat,outstat, XHAT] = runstreamestimate(dataout, m, options, Tf, k, eta, gamma);
+MF = floor(dataout.tf/frmlen); % simulation length in frames
 
-saveresults = true;
+%% Run  streaming solver
+ [xhat,outstat,ktvec, dtvec, XHAT, tauArray]= runstreamestimate(dataout, m, options, MF, k, eta, gamma);
+
+nowstamp = datetime('now','TimeZone','local','Format','d-MMM-y_HH_mm');
 if saveresults
-    nowstamp = datetime('now','TimeZone','local','Format','d-MMM-y_HH_mm');
     save(sprintf('CIResults_%s',nowstamp),'dataout','dataname','datapath','xhat', 'XHAT', 'options');
 end
 
+
+
 %% Plot result
-% Compute lambdaVec
-Kglbltvec = dataout.timevec(1:Tf*m);
-tplot = dataout.ts:(dataout.delta/100):dataout.tf;
-svec = k(tplot(:),Kglbltvec(:).')*xhat;
-lamvec = exp(svec);
+plotxhat_tf=0;
+if plotxhat_tf
+    %% Compute lambdaVec
+    tplot = dataout.ts:(dataout.delta/100):ktvec(end);
+    lamvec = reconstlambda(k, xhat,ktvec,tplot);    
+    figure(1),clf
+    plot(tplot,lamvec,'--b')
+    hold all
+    stem(dataout.timevec(1:MF*m),5*dataout.spikevec((1:MF*m)))
+end
+if (makevideo == true)
+    TsPlot = delta/10;
+    vidtit = sprintf('Streamspikes_%s_%s',dataname, nowstamp);
+    makespikesvideo(vidtit, XHAT, k, m,  MF, ktvec, TsPlot, tauArray)    ;
+end
 %%
-figure(1),clf
-plot(tplot,lamvec,'--b')
-hold all
-stem(dataout.timevec(1:Tf*m),5*dataout.spikevec((1:Tf*m)))
-
-
+%% Smart pllot
+load('CIResults_20-Sep-2021_16_33.mat');
+smartplot(XHAT, k, m,  MF, ktvec, TsPlot, tauArray);
