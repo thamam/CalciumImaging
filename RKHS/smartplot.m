@@ -1,9 +1,7 @@
-function []=smartplot(XHAT, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH)
+function []=smartplot(XHAT, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH, xstar)
 %SMARTPLOT Summary of this function goes here
 %   Detailed explanation goes here
 % tspikes = dataout.tspikes;
-resnum = size(XHAT,2);
-xstar = XHAT(1:(MF*m),end);
 tvecplotstar = (ktvec(1):TsPlot:ktvec(end)).';
 lambdastar = reconstlambda(k, xstar, ktvec, tvecplotstar);
 % Generate a set of frames, get the frame from the figure, and then write each frame to the file.
@@ -66,7 +64,8 @@ while(~strcmp(dirkey,'e'))
         hold(hdown,'off')
 
          %plotting previous estimate
-        plot(hdown, tvecplot_c,lam_c,'g', 'linewidth',1,'LineStyle','--')        
+        plot(hdown, tvecplot_c,lam_c,'g', 'linewidth',1.5,'LineStyle','--')        
+        hold(hdown,'on')
         %plotting new estiamte
         stem(hdown, tau_t, lamfunc(tau_t.'),'ks','filled','MarkerFaceColor','y');
         plot(hdown, tvecplot, lamhat,'b','LineWidth',1.5);

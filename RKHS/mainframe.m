@@ -14,24 +14,58 @@ clc;
 saveresults = true;
 makevideo = true;
 %% setting simulation and algorithm parameters
-% Select data
-% change data name into on
-% dataname = 'test';
-% datapath=[];
-% addpath(genpath('C:\Users\tomer\MATLAB\Projects\CI\Datasets'));
+%% BASIC USER INTERFACE
+
+% Select data: % change data name into dataname = 'test' , or name of of
+% the CI datasets files, and then set the path to dat in 'datapath'
 dataname = 'data_080511_cell7_002.mat';
 datapath = '..\Datasets\GCaMP5k\\processed_data\';
-%%
-% Algorithm parameters
+
+
+BUFFERLENGTH = 3;
+
+% prepare animated video of results
+MAKEVIDEO = true;
+
+% Start interactive plot of rsults
+SMARTPLOT = true;
+
+% Option to limit length of simulation
+maxsimleng = inf; % in #of frames
+
+% frame size scale factor (default m = 2*tmin |tmin = min_delt
+% k(|t-delt|)<supeps
+fmag = 1;
+%% ADVANCED USER INTERFACE
+
+
+% kernel parameters
 supeps = 1e-3; % support suppers threshold
 sig_f = 1; sig_l= 1/2; %kernel initial parameters
-k = @(i,j) sig_f*exp(-(i-j).^2./sig_l^2); %kernel handle function
-eta = 2; % reg. penalty wieght
-gamma = 1e-6; % Tikhonov regularization constant
-BUFFERLENGTH = 3;
-% Opt. solver params (for Matlab builtin solver)
-% alg2use = 'quasi-newton';
+
+eta = 2; % penalty wieght
+gamma = 1e-9; % Tikhonov regularization constant
+
+% kernels spacings (and accuracy of computing integral in ML )
+% maybe rounded to align with time resolution of avaiable data
+deltaTarget = 40e-3;
+
+% Choose which algorithm to use: 'trust-region' , or  'quasi-newton'
 alg2use = 'trust-region' ;
+% alg2use = 'quasi-newton';
+
+% Plotting resolution
+TsPlotfactor = 10; % TsPlot  = delta/TsPlotfactor;
+
+% Can set to false and provide mat file that has 'xhat_batch' already saved
+recomputebatch = true; 
+% xbatchfilename  =[];
+
+
+
+%%
+% Opt. solver params (for Matlab builtin solver)
+% Algorithm parameters
 options = optimoptions('fminunc','Algorithm',alg2use,'SpecifyObjectiveGradient',true);
 options.HessianFcn = 'objective';
 % options.CheckGradients = true;
@@ -43,7 +77,6 @@ options.HessianFcn = 'objective';
 
 %% Load data
 [rawdataout] = loaddata(dataname, datapath) ; %read data for code testing
-deltaTarget = 40e-3;
 [delta, tkernvec, dsspikesvec, tspikes] =...
     discretizesamples(rawdataout.timevec, rawdataout.spikevec, deltaTarget);
 
@@ -61,13 +94,16 @@ if 0 %visualize data
     stem(tkernvec,dsspikesvec,'rs')
 end
 
+%Define kernel handle function - square exponential 
+k = @(i,j) sig_f*exp(-(i-j).^2./sig_l^2); 
+
 % Compute frame size as 2*tmin, tmin = min_dt s.t. (k(|dt|)<supeps) use
 % current sig_l, sig_f, delta check later if need to change frames' size
 [tminInd, mintime ] = computeframe(supeps, dataout.delta, k );
 
 
-% mitime(tminInd) gives the minimum half-time(indices) for local frame size
-fmag = 1;
+% Determine frame length : mitime(tminInd) gives the minimum
+% half-time(indices) for local frame size
 frmlen = fmag*2*mintime;
 m = fmag*2*tminInd;
 
@@ -78,21 +114,21 @@ m = fmag*2*tminInd;
 
 % Set simulation length as N*frmlen N integer - truncate if needed
 MF = floor(dataout.tf/frmlen); % simulation length in frames
-MF=8;
+
+if MF > maxsimleng
+    MF = floor(maxsimleng);
+end
 %% Run  streaming solver
-[xhat,outstat,ktvec, dtvec, XHAT, tauArray]= runstreamestimate(dataout, m, options, MF, k, eta, gamma, BUFFERLENGTH);
+[xhat,outstat,ktvec, dtvec, XHAT, tauArray]= ...
+    runstreamestimate(dataout, m, options, MF, k, eta, gamma, BUFFERLENGTH);
 
 nowstamp = datetime('now','TimeZone','local','Format','d-MMM-y_HH_mm');
-if saveresults
-    save(sprintf('CIResults_%s',nowstamp),'dataout','dataname',...
-        'datapath','xhat', 'XHAT', 'options','k','MF','ktvec');
-end
+TsPlot  = delta/TsPlotfactor;
 
-%% Copy backwards Xhat solutions
+%% bACK Populate XHAt solutions 
 if BUFFERLENGTH>MF
     XHAT_full = XHAT;
 else
-    
     XHAT_full=XHAT;
     for ii=BUFFERLENGTH+1:MF
         missingInd = 1:(ii-BUFFERLENGTH)*m;
@@ -100,7 +136,8 @@ else
     end
 end
 
-%% Plot result
+
+%% Manual plot  - for debug
 plotxhat_tf=0;
 if plotxhat_tf
     xhat = XHAT_full(:,end);
@@ -113,19 +150,30 @@ if plotxhat_tf
     lambatspikes = reconstlambda(k, xhat,ktvec,dataout.tspikes)
     stem(dataout.tspikes,lambatspikes,'ks','MarkerSize',5,'LineWidth',0.5,'LineStyle',':')
 end
-TsPlot = delta/10;
-if (makevideo == true)
+
+%% Compute batch(off-line) solve
+if recomputebatch
+    X0 = XHAT_full(:,end);
+    [xstar,fval, exitflag] = globalsolver(X0, dataout, ktvec, k,eta);
+else
+    xstar = load(xbatchfilename,'xhat_batch');
+end
+
+if saveresults
+    save(sprintf('CIResults_%s',nowstamp),'dataout','dataname',...
+        'datapath','xhat', 'XHAT', 'options','k','MF','ktvec', 'TsPlot','xstar');
+end
+
+%% Prepare results video animation file
+if (MAKEVIDEO)
     vidtit = sprintf('Streamspikes_%s_%s',dataname, nowstamp);
-    makespikesvideo(vidtit, XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray)    ;
+    makespikesvideo(vidtit, XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, xstar )    ;
 end
 %%
 %% Smart pllot
 % load('CIResults_20-Sep-2021_16_33.mat');
-%% Load missing variables for playing saved results 
-if 0 
-%%
-    ktvec = dataout.timevec(1:size(XHAT_full,1));
-    TsPlot = delta/10;
+
+%% Load missing variables for playing saved results
+if SMARTPLOT
+    smartplot(XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH, xstar);
 end
-%%
-smartplot(XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH);

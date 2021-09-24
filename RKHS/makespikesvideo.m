@@ -1,4 +1,4 @@
-function [ ] = makespikesvideo(vidtit, XHAT, k, m,  MF, ktvec, TsPlot, tauArray)
+function [ ] = makespikesvideo(vidtit, XHAT, k, m,  MF, ktvec, TsPlot, tauArray, xstar)
 %MAKESPIKESVIDEO Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -14,7 +14,6 @@ v.FrameRate=4;
 open(v);
 
 resnum = size(XHAT,2);
-xstar = XHAT(1:(MF*m),end);
 tvecplotstar = (ktvec(1):TsPlot:ktvec(end)).';
 lambdastar = reconstlambda(k, xstar, ktvec, tvecplotstar);
 % Generate a set of frames, get the frame from the figure, and then write each frame to the file.
