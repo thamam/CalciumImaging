@@ -14,7 +14,7 @@ v.FrameRate=4;
 open(v);
 
 resnum = size(XHAT,2);
-xstar = XHAT{resnum};
+xstar = XHAT(1:(MF*m),end);
 tvecplotstar = (ktvec(1):TsPlot:ktvec(end)).';
 lambdastar = reconstlambda(k, xstar, ktvec, tvecplotstar);
 % Generate a set of frames, get the frame from the figure, and then write each frame to the file.
@@ -23,7 +23,7 @@ hold all
 for t = 1: min(MF,resnum)
     
     %Plotting solution up to time t in resnum
-    xhat_t = XHAT{t};
+    xhat_t =  XHAT(1:t*m,t);
     Nt = numel(xhat_t);
     ktvec_t = ktvec(1:Nt);
     tvecplot = (ktvec_t(1):TsPlot:ktvec_t(end));
