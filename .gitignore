@@ -1,1 +1,6 @@
 # List of untracked files to ignore
+
+*.mat
+*.mp4
+*.asv
+*.fig
