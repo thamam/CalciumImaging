@@ -31,7 +31,7 @@ MAKEVIDEO = true;
 SMARTPLOT = true;
 
 % Option to limit length of simulation
-maxsimleng = inf; % in #of frames
+maxsimleng = 20; %inf; % in #of frames
 
 % frame size scale factor (default m = 2*tmin |tmin = min_delt
 % k(|t-delt|)<supeps
