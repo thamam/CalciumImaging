@@ -4,16 +4,18 @@ function datOut = generateSpikes(varargin)
 %% Set up simulation parameters
 
 p = inputParser; % create input scheme
-addParameter(p, 'tmax'     ,      4             );
-addParameter(p, 'cosntx'   ,      false         );
-addParameter(p, 'overDisp' ,      false         ); % normalize option
-addParameter(p, 'threshVal',      0             );
-addParameter(p, 'N_samp'   ,      50            );                         % Samples are in per-second units
-addParameter(p, 'N_trial'  ,      10            );
-addParameter(p, 'pmax'     ,      Inf           );
-addParameter(p, 'plotOpt'  ,      false         );
-addParameter(p, 'n_params' ,      [0.5, 0.5, 1] );
-addParameter(p, 'x_params' ,      [8, 1, 2]     );
+addParameter(p, 'tmax'      ,     4             );
+addParameter(p, 'cosntx'    ,     false         );
+addParameter(p, 'overDisp'  ,     false         ); % normalize option
+addParameter(p, 'threshVal' ,     0             );
+addParameter(p, 'N_samp'    ,     50            );                         % Samples are in per-second units
+addParameter(p, 'N_trial'   ,     10            );
+addParameter(p, 'min_dt'    ,     2e-3          );
+addParameter(p, 'rateOffset',     0             );
+addParameter(p, 'pmax'      ,     Inf           );
+addParameter(p, 'plotOpt'   ,     false         );
+addParameter(p, 'n_params'  ,     [0.5, 0.5, 1] );
+addParameter(p, 'x_params'  ,     [8, 1, 2]     );
 
 parse(p,varargin{:});                                                      % Parse and validate input arguments(contained in cell array varargin)
 p = p.Results;                                                             % Contains the validated values of the inputs.
@@ -30,9 +32,10 @@ if p.cosntx
 else
     Kxx_full = mk_GP_mat(tt_samp, tt_samp, p.x_params);                    % Make GP matrices for the data
     x_true   = Inf;
-    while (max(exp(x_true)) > 5)||(max(exp(x_true)) < exp(0))
+    while (max(exp(x_true)) > 5)||(max(exp(x_true)) < exp(1))
         x_true = mvnrnd(zeros(numel(tt_samp),1),Kxx_full);                 % Resample until the max values are not insane
     end 
+    x_true = x_true + p.rateOffset;
     x_proj = pinv(Kxx_full,1e-4)*x_true(:);
 end
 
@@ -83,7 +86,7 @@ end
 
 for kk = 1:p.N_trial
     min_dt     = 0;
-    while min_dt < 2e-3
+    while min_dt < p.min_dt
         evt{kk} = ogatapoisson(p_rate{kk},rmax,p.tmax,p.pmax);
         if numel(evt{kk}) > 1
             min_dt = min(diff(evt{kk}));
