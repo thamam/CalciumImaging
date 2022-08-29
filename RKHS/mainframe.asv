@@ -11,6 +11,7 @@
 close all;
 clear;
 clc;
+addpath(genpath('../DataGen/'));
 saveresults = true;
 makevideo = true;
 %% setting simulation and algorithm parameters
@@ -22,6 +23,7 @@ dataname = 'data_080511_cell7_002.mat';
 datapath = '..\Datasets\GCaMP5k\\processed_data\';
 
 
+
 BUFFERLENGTH = 3;
 
 % prepare animated video of results
@@ -31,7 +33,7 @@ MAKEVIDEO = true;
 SMARTPLOT = true;
 
 % Option to limit length of simulation
-maxsimleng = inf; % in #of frames
+maxsimleng = 20; %inf; % in #of frames
 
 % frame size scale factor (default m = 2*tmin |tmin = min_delt
 % k(|t-delt|)<supeps
@@ -57,14 +59,13 @@ alg2use = 'trust-region' ;
 % Plotting resolution
 TsPlotfactor = 10; % TsPlot  = delta/TsPlotfactor;
 
+% Can set to false and provide mat file that has 'xhat_batch' already saved
+recomputebatch = true; 
+% xbatchfilename  =[];
+
 
 
 %%
-
-
-
-
-
 % Opt. solver params (for Matlab builtin solver)
 % Algorithm parameters
 options = optimoptions('fminunc','Algorithm',alg2use,'SpecifyObjectiveGradient',true);
@@ -123,13 +124,8 @@ end
 [xhat,outstat,ktvec, dtvec, XHAT, tauArray]= ...
     runstreamestimate(dataout, m, options, MF, k, eta, gamma, BUFFERLENGTH);
 
-
 nowstamp = datetime('now','TimeZone','local','Format','d-MMM-y_HH_mm');
 TsPlot  = delta/TsPlotfactor;
-if saveresults
-    save(sprintf('CIResults_%s',nowstamp),'dataout','dataname',...
-        'datapath','xhat', 'XHAT', 'options','k','MF','ktvec');
-end
 
 %% bACK Populate XHAt solutions 
 if BUFFERLENGTH>MF
@@ -157,9 +153,23 @@ if plotxhat_tf
     stem(dataout.tspikes,lambatspikes,'ks','MarkerSize',5,'LineWidth',0.5,'LineStyle',':')
 end
 
+%% Compute batch(off-line) solve
+if recomputebatch
+    X0 = XHAT_full(:,end);
+    [xstar,fval, exitflag] = globalsolver(X0, dataout, ktvec, k,eta);
+else
+    xstar = load(xbatchfilename,'xhat_batch');
+end
+
+if saveresults
+    save(sprintf('CIResults_%s',nowstamp),'dataout','dataname',...
+        'datapath','xhat', 'XHAT', 'options','k','MF','ktvec', 'TsPlot','xstar');
+end
+
+%% Prepare results video animation file
 if (MAKEVIDEO)
     vidtit = sprintf('Streamspikes_%s_%s',dataname, nowstamp);
-    makespikesvideo(vidtit, XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray)    ;
+    makespikesvideo(vidtit, XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, xstar )    ;
 end
 %%
 %% Smart pllot
@@ -167,5 +177,5 @@ end
 
 %% Load missing variables for playing saved results
 if SMARTPLOT
-    smartplot(XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH);
+    smartplot(XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH, xstar);
 end

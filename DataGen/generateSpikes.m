@@ -9,8 +9,6 @@ function datOut = generateSpikes(varargin)
 % dataOut = generateSpikes('tmax',6,'N_trial',5,'rateOffset',1)
 %
 % 2022
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set up simulation parameters
 
@@ -119,7 +117,7 @@ datOut.rmax   = rmax;
 datOut.min_dt = min_dt;
 datOut.mean_proc = mean(exp(bsxfun(@plus, x_true(:), cell2mat(n_true).')),2);
 datOut.std_proc  = std(exp(bsxfun(@plus, x_true(:), cell2mat(n_true).')),[],2);
-
+datOut.tt_samp = tt_samp; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Optional plotting
 

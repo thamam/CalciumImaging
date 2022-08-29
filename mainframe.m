@@ -11,6 +11,10 @@
 close all;
 clear;
 clc;
+addpath(genpath('DataGen/'));
+addpath(genpath('RKHS'));
+addpath(genpath('Types'));
+
 saveresults = true;
 makevideo = true;
 %% setting simulation and algorithm parameters
@@ -19,13 +23,14 @@ makevideo = true;
 % Select data: % change data name into dataname = 'test' , or name of of
 % the CI datasets files, and then set the path to dat in 'datapath'
 dataname = 'data_080511_cell7_002.mat';
-datapath = '..\Datasets\GCaMP5k\\processed_data\';
+datapath = 'Datasets\GCaMP5k\\processed_data\';
 
+dataname = DatasetsType.Sim;    
 
-BUFFERLENGTH = 3;
+BUFFERLENGTH = 2;
 
 % prepare animated video of results
-MAKEVIDEO = true;
+MAKEVIDEO = false;
 
 % Start interactive plot of rsults
 SMARTPLOT = true;
@@ -41,6 +46,7 @@ fmag = 1;
 
 % kernel parameters
 supeps = 1e-3; % support suppers threshold
+
 sig_f = 1; sig_l= 1/2; %kernel initial parameters
 
 eta = 2; % penalty wieght
@@ -91,7 +97,7 @@ if 0 %visualize data
     figure(1),clf
     stem(rawdataout.timevec, rawdataout.spikevec, '-*')
     hold all
-    stem(tkernvec,dsspikesvec,'rs')
+    stem(tkernvec,dsspikesvec(1:end-1),'rs')
 end
 
 %Define kernel handle function - square exponential 
@@ -102,7 +108,7 @@ k = @(i,j) sig_f*exp(-(i-j).^2./sig_l^2);
 [tminInd, mintime ] = computeframe(supeps, dataout.delta, k );
 
 
-% Determine frame length : mitime(tminInd) gives the minimum
+% Determine frame length : mintime(tminInd) gives the minimum
 % half-time(indices) for local frame size
 frmlen = fmag*2*mintime;
 m = fmag*2*tminInd;
@@ -118,6 +124,7 @@ MF = floor(dataout.tf/frmlen); % simulation length in frames
 if MF > maxsimleng
     MF = floor(maxsimleng);
 end
+
 %% Run  streaming solver
 [xhat,outstat,ktvec, dtvec, XHAT, tauArray]= ...
     runstreamestimate(dataout, m, options, MF, k, eta, gamma, BUFFERLENGTH);
@@ -138,7 +145,7 @@ end
 
 
 %% Manual plot  - for debug
-plotxhat_tf=0;
+plotxhat_tf=1;
 if plotxhat_tf
     xhat = XHAT_full(:,end);
     %% Compute lambdaVec
@@ -177,3 +184,5 @@ end
 if SMARTPLOT
     smartplot(XHAT_full, k, m,  MF, ktvec, TsPlot, tauArray, BUFFERLENGTH, xstar);
 end
+
+
