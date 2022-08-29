@@ -20,13 +20,18 @@ makevideo = true;
 %% setting simulation and algorithm parameters
 %% BASIC USER INTERFACE
 
+datatype  = DatasetsType.Sim;    
+
 % Select data: % change data name into dataname = 'test' , or name of of
 % the CI datasets files, and then set the path to dat in 'datapath'
-dataname = 'data_080511_cell7_002.mat';
-datapath = 'Datasets\GCaMP5k\\processed_data\';
-
-dataname = DatasetsType.Sim;    
-
+if isequal(datatype, DatasetsType.GCaMP5k)
+    data_options.dataname = 'data_080511_cell7_002.mat';
+    data_options.datapath = 'Datasets\GCaMP5k\\processed_data\';
+elseif isequal(datatype, DatasetsType.Sim)
+    data_options = createProblemStruct();    
+    data_options.tmax = 12;
+end
+ 
 BUFFERLENGTH = 2;
 
 % prepare animated video of results
@@ -82,7 +87,7 @@ options.HessianFcn = 'objective';
 % options.FunctionTolerance = 1e-10;
 
 %% Load data
-[rawdataout] = loaddata(dataname, datapath) ; %read data for code testing
+[rawdataout] = loaddata(datatype, data_options) ; %read data for code testing
 [delta, tkernvec, dsspikesvec, tspikes] =...
     discretizesamples(rawdataout.timevec, rawdataout.spikevec, deltaTarget);
 
@@ -167,8 +172,8 @@ else
 end
 
 if saveresults
-    save(sprintf('CIResults_%s',nowstamp),'dataout','dataname',...
-        'datapath','xhat', 'XHAT', 'options','k','MF','ktvec', 'TsPlot','xstar');
+    save(sprintf('CIResults_%s',nowstamp),'dataout','datatype',...
+        'data_options','xhat', 'XHAT', 'options','k','MF','ktvec', 'TsPlot','xstar');
 end
 
 %% Prepare results video animation file

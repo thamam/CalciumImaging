@@ -1,8 +1,8 @@
-function [dataout] = loaddata(dataname, datapath)
+function [dataout] = loaddata(datatype, options)
 %loaddata Load spikes data
 %   Detailed explanation goes here
 
-switch dataname
+switch datatype
     case DatasetsType.Synt
         Ts = 40e-3;
         [ts, tf] = deal(0, 15);
@@ -16,10 +16,9 @@ switch dataname
         dataout.src = 'sim';
 
     case DatasetsType.Sim
-        t_final = 12;
+        t_final = options.tmax;
         t_start = 0;
-        dataOut = generateSpikes('tmax',t_final,'N_trial',5,'rateOffset',1);
-
+        dataOut = generateSpikes('tmax',options.tmax,'N_trial', options.N_trial,'rateOffset', options.rateOffset);
         dataout.ts = t_start;
         dataout.tf = t_final;
         dataout.tspikes = sort(vertcat(dataOut.evt{:}),'ascend');                       
@@ -33,8 +32,8 @@ switch dataname
         dataout.src = 'sim';
 
     case DatasetsType.GCaMP5k
-        obj_ = load(strcat(datapath,dataname),'obj');
-        obj=obj_.obj;
+        obj_ = load(strcat(options.datapath ,options.dataname ),'obj');
+        obj=obj_.obj;        
         % Fluorocensce data - ignore for now
         %fmean_roi=obj.timeSeriesArrayHash.value{1}.valueMatrix;
         %fmean_neuropil=obj.timeSeriesArrayHash.value{2}.valueMatrix;
