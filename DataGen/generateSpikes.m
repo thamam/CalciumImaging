@@ -1,21 +1,33 @@
 function datOut = generateSpikes(varargin)
 
+% datOut = generateSpikes(varargin)
+% 
+% Function to generate spike events from a latent GP rate. 
+%
+% Example:
+%
+% dataOut = generateSpikes('tmax',6,'N_trial',5,'rateOffset',1)
+%
+% 2022
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set up simulation parameters
 
 p = inputParser; % create input scheme
-addParameter(p, 'tmax'      ,     4             );
+addParameter(p, 'tmax'      ,     4             );                         % Time window length (in seconds) to simulate spikes over
+addParameter(p, 'x_params'  ,     [8, 1, 2]     );                         % Parameters of the latent rage Gaussian Process
+addParameter(p, 'N_samp'    ,     50            );                         % Samples are in per-second units
+addParameter(p, 'N_trial'   ,     10            );                         % Number of trials to simulate (resampling of spikes given the same rate)
+addParameter(p, 'rateOffset',     0             );                         % Possible offset for the rage (if a nonzero mean is required)
+% Parameters below are not recommended to change
 addParameter(p, 'cosntx'    ,     false         );
 addParameter(p, 'overDisp'  ,     false         ); % normalize option
 addParameter(p, 'threshVal' ,     0             );
-addParameter(p, 'N_samp'    ,     50            );                         % Samples are in per-second units
-addParameter(p, 'N_trial'   ,     10            );
 addParameter(p, 'min_dt'    ,     2e-3          );
-addParameter(p, 'rateOffset',     0             );
 addParameter(p, 'pmax'      ,     Inf           );
 addParameter(p, 'plotOpt'   ,     false         );
 addParameter(p, 'n_params'  ,     [0.5, 0.5, 1] );
-addParameter(p, 'x_params'  ,     [8, 1, 2]     );
 
 parse(p,varargin{:});                                                      % Parse and validate input arguments(contained in cell array varargin)
 p = p.Results;                                                             % Contains the validated values of the inputs.
