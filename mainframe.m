@@ -176,6 +176,14 @@ if saveresults
         'data_options','xhat', 'XHAT', 'options','k','MF','ktvec', 'TsPlot','xstar');
 end
 
+%% Compute GP inference in batch(off-line) solution (baseline)
+%
+% Here the x_params are the GP parameters used to simulate the data.
+% The first input is a list of spike times. The third input is the
+% time-span to infer over. 
+
+xFit = fit_PoissonGP(cell2mat(datOut.evt), pars.x_params , [0,pars.tmax], 1e-2);
+
 %% Prepare results video animation file
 if (MAKEVIDEO)
     vidtit = sprintf('Streamspikes_%s_%s',dataname, nowstamp);

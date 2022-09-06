@@ -18,7 +18,7 @@
 % 'plotOpt'  , false         
 % 'x_params' , [8, 1, 2]     
 % 'min_dt'   , 2e-3 
-pars.tmax     = 6;
+pars.tmax     = 30;
 pars.x_params = [8, 1, 2]; % [p1,p2,p3] GP Kernel variables K = p1 *exp(|| dt||^p3/(p2))
 
 datOut = generateSpikes('N_trial', 10, 'tmax', pars.tmax, 'x_params', pars.x_params);
