@@ -16,7 +16,8 @@ addpath(genpath('RKHS'));
 addpath(genpath('Types'));
 
 saveresults = true;
-makevideo = true;
+makevideo   = true;
+
 %% setting simulation and algorithm parameters
 %% BASIC USER INTERFACE
 
@@ -28,8 +29,9 @@ if isequal(datatype, DatasetsType.GCaMP5k)
     data_options.dataname = 'data_080511_cell7_002.mat';
     data_options.datapath = 'Datasets\GCaMP5k\\processed_data\';
 elseif isequal(datatype, DatasetsType.Sim)
-    data_options = createProblemStruct();    
-    data_options.tmax = 12;
+    data_options            = createProblemStruct();    
+    data_options.tmax       = 40;
+    data_options.rateOffset = 1;
 end
  
 BUFFERLENGTH = 2;
@@ -48,13 +50,15 @@ maxsimleng = 20; %inf; % in #of frames
 fmag = 1;
 %% ADVANCED USER INTERFACE
 
-
-% kernel parameters
+% Kernel parameters
+if isequal(datatype, DatasetsType.Sim)
+    sig_f = data_options.x_params(1); 
+    sig_l = data_options.x_params(2);      % kernel initial parameters
+else
+    sig_f = 1; sig_l = 1/2;            % kernel initial parameters
+end
 supeps = 1e-3; % support suppers threshold
-
-sig_f = 1; sig_l= 1/2; %kernel initial parameters
-
-eta = 2; % penalty wieght
+eta   = 2;    % penalty wieght
 gamma = 1e-9; % Tikhonov regularization constant
 
 % kernels spacings (and accuracy of computing integral in ML )
@@ -92,13 +96,13 @@ options.HessianFcn = 'objective';
     discretizesamples(rawdataout.timevec, rawdataout.spikevec, deltaTarget);
 
 %prepare discretized data struct
-dataout = rawdataout;
+dataout            = rawdataout;
 dataout.binsspikes = dsspikesvec ; %spikes counted per dicrete bin
-dataout.timevec = tkernvec; % discretization time marks
-dataout.delta = delta;
-dataout.tspikes = tspikes;
+dataout.timevec    = tkernvec; % discretization time marks
+dataout.delta      = delta;
+dataout.tspikes    = tspikes;
 
-if 0 %visualize data
+if 1 %visualize data
     figure(1),clf
     stem(rawdataout.timevec, rawdataout.spikevec, '-*')
     hold all

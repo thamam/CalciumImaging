@@ -174,7 +174,7 @@ function x_true = sampRandMVNGP(u,sigVec)
 N = numel(sigVec);
 
 sigVec = sigVec(:)';
-sigVec = [sigVec,zeros(1,N),fliplr(sigVec(2:end))];
+sigVec = [sigVec,zeros(1,N),fliplr(sigVec(2:end))]./numel(sigVec);
 
 
 x_true = randn(size(u)); % Initial simulation of iid data
