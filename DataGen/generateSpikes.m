@@ -22,8 +22,6 @@ function datOut = generateSpikes(varargin)
 % dataOut = generateSpikes('tmax',6,'N_trial',5,'rateOffset',1)
 %
 % 2022
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Set up simulation parameters
 
@@ -41,6 +39,7 @@ addParameter(p, 'min_dt'    ,     2e-3          );
 addParameter(p, 'pmax'      ,     Inf           );
 addParameter(p, 'plotOpt'   ,     false         );
 addParameter(p, 'n_params'  ,     [0.5, 0.5, 1] );
+addParameter(p, 'sampOpt'   ,     'circest'     );
 
 parse(p,varargin{:});                                                      % Parse and validate input arguments(contained in cell array varargin)
 p = p.Results;                                                             % Contains the validated values of the inputs.
@@ -58,7 +57,12 @@ else
     Kxx_full = mk_GP_mat(tt_samp, tt_samp, p.x_params);                    % Make GP matrices for the data
     x_true   = Inf;
     while (max(exp(x_true)) > 5)||(max(exp(x_true)) < exp(1))
-        x_true = mvnrnd(zeros(numel(tt_samp),1),Kxx_full);                 % Resample until the max values are not insane
+        switch lower(p.sampOpt)
+        case 'circest'
+            x_true = sampRandMVNGP(zeros(numel(tt_samp),1),Kxx_full(1,:).');
+        otherwise
+            x_true = mvnrnd(zeros(numel(tt_samp),1),Kxx_full);             % Resample until the max values are not insane
+        end
     end 
     x_true = x_true + p.rateOffset;
     x_proj = pinv(Kxx_full,1e-4)*x_true(:);
@@ -132,7 +136,7 @@ datOut.rmax   = rmax;
 datOut.min_dt = min_dt;
 datOut.mean_proc = mean(exp(bsxfun(@plus, x_true(:), cell2mat(n_true).')),2);
 datOut.std_proc  = std(exp(bsxfun(@plus, x_true(:), cell2mat(n_true).')),[],2);
-
+datOut.tt_samp = tt_samp; 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Optional plotting
 
@@ -172,7 +176,25 @@ if p.plotOpt
     set(gcf, 'color', [1,1,1])
 end
 
+end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+function x_true = sampRandMVNGP(u,sigVec)
+
+N = numel(sigVec);
+
+sigVec = sigVec(:)';
+sigVec = [sigVec,zeros(1,N),fliplr(sigVec(2:end))]./numel(sigVec);
+
+
+x_true = randn(size(u)); % Initial simulation of iid data
+x_true = sqrt(fft(sigVec(:))).*[x_true(:);zeros(N,1);zeros(N-1,1)];
+x_true = real(fft((x_true)));
+x_true = x_true(1:N);
+x_true = x_true + u;     % Offset by the mean
 
 end
 
