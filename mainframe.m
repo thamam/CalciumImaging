@@ -30,8 +30,9 @@ if isequal(datatype, DatasetsType.GCaMP5k)
     data_options.datapath = 'Datasets\GCaMP5k\\processed_data\';
 elseif isequal(datatype, DatasetsType.Sim)
     data_options            = createProblemStruct();    
-    data_options.tmax       = 40;
+    data_options.tmax       = 100;
     data_options.rateOffset = 1;
+    data_options.x_params(2)=1.5;
 end
  
 BUFFERLENGTH = 2;
@@ -54,6 +55,7 @@ fmag = 1;
 if isequal(datatype, DatasetsType.Sim)
     sig_f = data_options.x_params(1); 
     sig_l = data_options.x_params(2);      % kernel initial parameters
+    
 else
     sig_f = 1; sig_l = 1/2;            % kernel initial parameters
 end
@@ -91,9 +93,11 @@ options.HessianFcn = 'objective';
 % options.FunctionTolerance = 1e-10;
 
 %% Load data
+spikestime_start = tic;
 [rawdataout] = loaddata(datatype, data_options) ; %read data for code testing
 [delta, tkernvec, dsspikesvec, tspikes] =...
     discretizesamples(rawdataout.timevec, rawdataout.spikevec, deltaTarget);
+spikestime = toc(spikestime_start);
 
 %prepare discretized data struct
 dataout            = rawdataout;
