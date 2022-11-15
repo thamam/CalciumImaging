@@ -4,7 +4,20 @@ function datOut = generateSpikes(varargin)
 % 
 % Function to generate spike events from a latent GP rate. 
 %
+% Output struct dataOut has the following fields
+%   - 
+%
 % Example:
+%   .x_true     - True rate
+%   .n_true     - True rate "noise" term (overdisperson)
+%   .evt        - Sampled spike trains. Returned as a cell array that is
+%                 N_trials long. Each element is the sampled spikes for 
+%                 one trial
+%   .p_rate     - 
+%   .rmax       - 
+%   .min_dt     - 
+%   .mean_proc  - 
+%   .std_proc   - 
 %
 % dataOut = generateSpikes('tmax',6,'N_trial',5,'rateOffset',1)
 %
