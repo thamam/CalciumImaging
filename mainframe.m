@@ -21,7 +21,7 @@ makevideo   = true;
 %% setting simulation and algorithm parameters
 %% BASIC USER INTERFACE
 
-datatype  = DatasetsType.Sim;    
+datatype  = DatasetsType.Sim;
 
 % Select data: % change data name into dataname = 'test' , or name of of
 % the CI datasets files, and then set the path to dat in 'datapath'
@@ -30,7 +30,7 @@ if isequal(datatype, DatasetsType.GCaMP5k)
     data_options.datapath = 'Datasets\GCaMP5k\\processed_data\';
 elseif isequal(datatype, DatasetsType.Sim)
     data_options            = createProblemStruct();    
-    data_options.tmax       = 100;
+    data_options.tmax       = 15;
     data_options.rateOffset = 1;
     data_options.x_params(2)=1.5;
 end
@@ -41,7 +41,7 @@ BUFFERLENGTH = 2;
 MAKEVIDEO = false;
 
 % Start interactive plot of rsults
-SMARTPLOT = true;
+SMARTPLOT = false;
 
 % Option to limit length of simulation
 maxsimleng = 20; %inf; % in #of frames
@@ -53,19 +53,19 @@ fmag = 1;
 
 % Kernel parameters
 if isequal(datatype, DatasetsType.Sim)
-    sig_f = data_options.x_params(1); 
-    sig_l = data_options.x_params(2);      % kernel initial parameters
-    
+    sig_f = data_options.x_params(1);   %% the variance of the Kernel
+    sig_l = data_options.x_params(2);      % the length of the autocovariance of the kernel
 else
     sig_f = 1; sig_l = 1/2;            % kernel initial parameters
 end
+
 supeps = 1e-3; % support suppers threshold
 eta   = 2;    % penalty wieght
-gamma = 1e-9; % Tikhonov regularization constant
+gamma = 1e-3; % Tikhonov regularization constant
 
 % kernels spacings (and accuracy of computing integral in ML )
 % maybe rounded to align with time resolution of avaiable data
-deltaTarget = 40e-3;
+deltaTarget = 2*40e-3;
 
 % Choose which algorithm to use: 'trust-region' , or  'quasi-newton'
 alg2use = 'trust-region' ;
@@ -106,7 +106,7 @@ dataout.timevec    = tkernvec; % discretization time marks
 dataout.delta      = delta;
 dataout.tspikes    = tspikes;
 
-if 1 %visualize data
+if 0 %visualize data
     figure(1),clf
     stem(rawdataout.timevec, rawdataout.spikevec, '-*')
     hold all
@@ -163,7 +163,7 @@ if plotxhat_tf
     xhat = XHAT_full(:,end);
     %% Compute lambdaVec
     tplot = dataout.ts:(dataout.delta/100):ktvec(end);
-    lamvec = reconstlambda(k, xhat,ktvec,tplot);
+    [lamvec, shatvec] = reconstlambda(k, xhat,ktvec,tplot);
     figure(1),clf
     plot(tplot,lamvec,'b','LineWidth',1.5)
     hold all
@@ -190,8 +190,9 @@ end
 % The first input is a list of spike times. The third input is the
 % time-span to infer over. 
 
-xFit = fit_PoissonGP(cell2mat(datOut.evt), pars.x_params , [0,pars.tmax], 1e-2);
-
+if 0  %% Adam - debug
+    xFit = fit_PoissonGP(cell2mat(datOut.evt), pars.x_params , [0,pars.tmax], 1e-2);
+end
 %% Prepare results video animation file
 if (MAKEVIDEO)
     vidtit = sprintf('Streamspikes_%s_%s',dataname, nowstamp);

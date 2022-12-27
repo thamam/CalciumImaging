@@ -1,7 +1,9 @@
 close all
 t=linspace(0,40,40*100);
-sig_f = 8;
-sig_l = 2;
+% sig_f = 8;
+% sig_l = 1.5;
+sig_f = 1;
+sig_l = 0.5;
 k = @(i,j) sig_f*exp(-(i-j).^2./sig_l^2); 
 %%
 figure
@@ -18,7 +20,7 @@ end
 
 %%
 sig_f = 8;
-sig_l = 1/2;
+sig_l = 3/2;
 
 k = @(i,j) sig_f*exp(-(i-j).^2./sig_l^2); 
 %%

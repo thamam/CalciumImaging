@@ -22,9 +22,9 @@ ds = ceil(deltaTarget/Ts);
 delta = Ts*ds;
 
 %pad with zeros - no residual
-zrpadnum = mod(numel(tvec) , ds);
+zrpadnum = ds-mod(numel(tvec) , ds);
 if zrpadnum>0
-    tvec = tvec(:).'; (tvec(end)+Ts*(1:1:zrpadnum)).';
+    tvec = [tvec(:).', (tvec(end)+Ts*(1:1:zrpadnum))];
     spikesvec = [spikesvec(:).', zeros(1,zrpadnum)];
 end
 
